@@ -11,8 +11,8 @@ export TARGET=${target}
 export PREFIX=$(readlink -f "${prefix}")
 export PATH="${PREFIX}/bin:${PATH}"
 
-export distdir="${PREFIX}/distfiles"
-export srcdir="${PREFIX}/source"
+export distdir="./distfiles"
+export srcdir="./source"
 export blddir="${PREFIX}/build"
 export bindir="${PREFIX}/bin"
 
