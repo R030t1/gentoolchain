@@ -17,8 +17,8 @@ export blddir="${PREFIX}/build"
 export bindir="${PREFIX}/bin"
 
 # TODO: Reuse repo between targets.
-if [[ ! -d ${PREFIX}/distfiles ]];	then mkdir -p "${PREFIX}/distfiles"; fi
-if [[ ! -d ${PREFIX}/source ]];		then mkdir -p "${PREFIX}/source"; fi
+if [[ ! -d ./distfiles ]];		then mkdir -p "./distfiles"; fi
+if [[ ! -d ./source ]];			then mkdir -p "./source"; fi
 if [[ ! -d ${PREFIX}/build ]];		then mkdir -p "${PREFIX}/build"; fi
 if [[ ! -d ${PREFIX}/bin ]]; 		then mkdir -p "${PREFIX}/bin"; fi
 
