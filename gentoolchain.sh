@@ -4,6 +4,11 @@
 export target=${target:-arm-none-eabi}
 export prefix=${prefix:-"./${target}"}
 
+export BASE_COMMON_FLAGS="-O2 -pipe"
+export BASE_CXXFLAGS="${BASE_COMMON_FLAGS}"
+export BASE_CFLAGS="${BASE_COMMON_FLAGS}"
+export BASE_LDFLAGS=""
+
 ############################################################################
 
 set -e
@@ -11,7 +16,7 @@ export TARGET=${target}
 export PREFIX=$(readlink -f "${prefix}")
 export PATH="${PREFIX}/bin:${PATH}"
 
-export distdir="./distfiles"
+export distdir=$(readlink -f "./distfiles")
 export blddir="${PREFIX}/build"
 export bindir="${PREFIX}/bin"
 
@@ -68,6 +73,7 @@ build_binutils() {
 	mkdir -p "${blddir}/binutils-gdb"
 	pushd "${blddir}/binutils-gdb"
 	${distdir}/binutils-gdb/configure \
+		--build="$(gcc -dumpmachine)" --host="$(gcc -dumpmachine)" \
 		--target="${TARGET}" --prefix="${PREFIX}" \
 		--with-cpu=cortex-m4 \
 		--with-fpu=fpv4-sp-d16 \
@@ -77,7 +83,8 @@ build_binutils() {
 		--enable-multilib \
 		--with-gnu-as \
 		--with-gnu-ld \
-		--disable-nls
+		--disable-nls \
+		${BASE_CXXFLAGS}
 	make -j4 all
 	make install
 	popd
@@ -87,6 +94,7 @@ build_gcc_bootstrap() {
 	mkdir -p "${blddir}/gcc"
 	pushd "${blddir}/gcc"
 	${distdir}/gcc/configure \
+		--build="$(gcc -dumpmachine)" --host="$(gcc -dumpmachine)" \
 		--target="${TARGET}" --prefix="${PREFIX}" \
 		--with-cpu=cortex-m4 \
 		--with-fpu=fpv4-sp-d16 \
@@ -101,7 +109,8 @@ build_gcc_bootstrap() {
 		--disable-nls \
 		--with-gnu-as \
 		--with-gnu-ld \
-		--enable-languages="c"
+		--enable-languages="c" \
+		${BASE_CXXFLAGS}
 	make -j4 all-gcc
 	make install-gcc
 	popd
@@ -122,7 +131,11 @@ build_newlib() {
 		--with-gnu-as \
 		--with-gnu-ld \
 		--disable-nls \
-		--enable-newlib-nano-malloc
+		--enable-newlib-nano-malloc \
+		--enable-newlib-io-c99-formats \
+		--enable-newlib-io-long-long \
+		--disable-newlib-atexit-dynamic-alloc \
+		${BASE_CXXFLAGS}
 	make -j4 all
 	make install
 	popd
