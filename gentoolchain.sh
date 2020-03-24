@@ -12,13 +12,11 @@ export PREFIX=$(readlink -f "${prefix}")
 export PATH="${PREFIX}/bin:${PATH}"
 
 export distdir="./distfiles"
-export srcdir="./source"
 export blddir="${PREFIX}/build"
 export bindir="${PREFIX}/bin"
 
 # TODO: Reuse repo between targets.
 if [[ ! -d ./distfiles ]];		then mkdir -p "./distfiles"; fi
-if [[ ! -d ./source ]];			then mkdir -p "./source"; fi
 if [[ ! -d ${PREFIX}/build ]];		then mkdir -p "${PREFIX}/build"; fi
 if [[ ! -d ${PREFIX}/bin ]]; 		then mkdir -p "${PREFIX}/bin"; fi
 
@@ -67,9 +65,6 @@ fetch_picolibc() {
 }
 
 build_binutils() {
-	# TODO: Find logic to stop lengthy copies if up to date.
-	#  With current method srcdir is unused.
-	cp -r "${distdir}/binutils-gdb" "${srcdir}"
 	mkdir -p "${blddir}/binutils-gdb"
 	pushd "${blddir}/binutils-gdb"
 	${distdir}/binutils-gdb/configure \
@@ -89,8 +84,6 @@ build_binutils() {
 }
 
 build_gcc_bootstrap() {
-	# TODO: Avoid lengthy copies.
-	cp -r "${distdir}/gcc" "${srcdir}"
 	mkdir -p "${blddir}/gcc"
 	pushd "${blddir}/gcc"
 	${distdir}/gcc/configure \
@@ -115,8 +108,6 @@ build_gcc_bootstrap() {
 }
 
 build_newlib() {
-	# TODO: Avoid lengthy copies.
-	cp -r "${distdir}/newlib-cygwin" "${srcdir}"
 	mkdir -p "${blddir}/newlib-cygwin"
 	pushd "${blddir}/newlib-cygwin"
 	${distdir}/newlib-cygwin/configure \
@@ -138,8 +129,6 @@ build_newlib() {
 }
 
 build_picolibc() {
-	# TODO: Avoid lengthy copies.
-	cp -r "${distdir}/picolibc" "${srcdir}"
 	mkdir -p "${blddir}/picolibc"
 	pushd "${blddir}/picolibc"
 	# Premade arm-none-eabi target.
