@@ -145,4 +145,10 @@ build_picolibc() {
 	${srcdir}/picolibc/do-arm-configure
 }
 
+build_gcc_final() {
+	#mkdir -p "${blddir}/gcc"
+	pushd "${blddir}/gcc"
+	${distdir}/gcc/configure
+}
+
 $@
