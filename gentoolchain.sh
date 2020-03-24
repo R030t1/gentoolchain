@@ -83,8 +83,7 @@ build_binutils() {
 		--enable-multilib \
 		--with-gnu-as \
 		--with-gnu-ld \
-		--disable-nls \
-		${BASE_CXXFLAGS}
+		--disable-nls
 	make -j4 all
 	make install
 	popd
@@ -109,8 +108,7 @@ build_gcc_bootstrap() {
 		--disable-nls \
 		--with-gnu-as \
 		--with-gnu-ld \
-		--enable-languages="c" \
-		${BASE_CXXFLAGS}
+		--enable-languages="c"
 	make -j4 all-gcc
 	make install-gcc
 	popd
@@ -134,8 +132,7 @@ build_newlib() {
 		--enable-newlib-nano-malloc \
 		--enable-newlib-io-c99-formats \
 		--enable-newlib-io-long-long \
-		--disable-newlib-atexit-dynamic-alloc \
-		${BASE_CXXFLAGS}
+		--disable-newlib-atexit-dynamic-alloc
 	make -j4 all
 	make install
 	popd
