@@ -5,8 +5,8 @@ export target=${target:-arm-none-eabi}
 export prefix=${prefix:-"./${target}"}
 
 export BASE_COMMON_FLAGS="-O2 -pipe"
-export BASE_CXXFLAGS="${BASE_COMMON_FLAGS}"
 export BASE_CFLAGS="${BASE_COMMON_FLAGS}"
+export BASE_CXXFLAGS="${BASE_COMMON_FLAGS}"
 export BASE_LDFLAGS=""
 
 ############################################################################
@@ -20,7 +20,6 @@ export distdir=$(readlink -f "./distfiles")
 export blddir="${PREFIX}/build"
 export bindir="${PREFIX}/bin"
 
-# TODO: Reuse repo between targets.
 if [[ ! -d ./distfiles ]];		then mkdir -p "./distfiles"; fi
 if [[ ! -d ${PREFIX}/build ]];		then mkdir -p "${PREFIX}/build"; fi
 if [[ ! -d ${PREFIX}/bin ]]; 		then mkdir -p "${PREFIX}/bin"; fi
@@ -92,6 +91,8 @@ build_binutils() {
 build_gcc_bootstrap() {
 	mkdir -p "${blddir}/gcc"
 	pushd "${blddir}/gcc"
+	export CFLAGS_FOR_TARGET="-O2 -pipe"
+	export CXXFLAGS_FOR_TARGET="-O2 -pipe"
 	${distdir}/gcc/configure \
 		--build="$(gcc -dumpmachine)" --host="$(gcc -dumpmachine)" \
 		--target="${TARGET}" --prefix="${PREFIX}" \
@@ -117,6 +118,8 @@ build_gcc_bootstrap() {
 build_newlib() {
 	mkdir -p "${blddir}/newlib-cygwin"
 	pushd "${blddir}/newlib-cygwin"
+	export CFLAGS_FOR_TARGET="-O2 -g -pipe"
+	export CXXFLAGS_FOR_TARGET="-O2 -g -pipe"
 	${distdir}/newlib-cygwin/configure \
 		--target="${TARGET}" --prefix="${PREFIX}" \
 		--with-cpu=cortex-m4 \
@@ -138,6 +141,43 @@ build_newlib() {
 	popd
 }
 
+build_newlib_nano() {
+	mkdir -p "${blddir}/newlib-cygwin-nano"
+	pushd "${blddir}/newlib-cygwin-nano"
+	export CFLAGS_FOR_TARGET="-Os -pipe"
+	export CXXFLAGS_FOR_TARGET="-Os -pipe"
+	${distdir}/newlib-cygwin/configure \
+		--target="${TARGET}" --prefix="${PREFIX}" \
+		--with-cpu=cortex-m4 \
+		--with-fpu=fpv4-sp-d16 \
+		--with-float=hard \
+		--with-mode=thumb \
+		--enable-interwork \
+		--enable-multilib \
+		--disable-newlib-supplied-syscalls \
+		--with-gnu-as \
+		--with-gnu-ld \
+		--disable-nls \
+		--enable-newlib-nano-malloc \
+		--enable-newlib-io-c99-formats \
+		--enable-newlib-io-long-long \
+		--disable-newlib-atexit-dynamic-alloc \
+		--enable-newlib-nano-malloc \
+		--enable-lite-exit \
+		--enable-newlib-nano-formatted-io
+	make -j4 all
+	make install
+	popd
+}
+
+copy_newlib_nano() {
+	multilibs=$(${PREFIX}/bin/${TARGET}-gcc -print-multi-lib)
+	buildouts=(libc.a libg.a librdimon.a libstdc++.a libsupc++.a)
+	for d in $(find "${blddir}/newlib-cygwin-nano" -name 'librdimon.a'); do
+		echo $d
+	done
+}
+
 build_picolibc() {
 	mkdir -p "${blddir}/picolibc"
 	pushd "${blddir}/picolibc"
@@ -148,7 +188,25 @@ build_picolibc() {
 build_gcc_final() {
 	#mkdir -p "${blddir}/gcc"
 	pushd "${blddir}/gcc"
-	${distdir}/gcc/configure
+	${distdir}/gcc/configure \
+		--build="$(gcc -dumpmachine)" --host="$(gcc -dumpmachine)" \
+		--target="${TARGET}" --prefix="${PREFIX}" \
+		--with-cpu=cortex-m4 \
+		--with-fpu=fpv4-sp-d16 \
+		--with-float=hard \
+		--with-mode=thumb \
+		--enable-interwork \
+		--enable-multilib \
+		--with-system-zlib \
+		--with-newlib \
+		--without-headers \
+		--disable-shared \
+		--disable-nls \
+		--with-gnu-as \
+		--with-gnu-ld \
+		--enable-languages="c,c++"
+	make -j4 all-gcc
+	make install-gcc
 }
 
 $@
