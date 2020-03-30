@@ -74,10 +74,7 @@ build_binutils() {
 	${distdir}/binutils-gdb/configure \
 		--build="$(gcc -dumpmachine)" --host="$(gcc -dumpmachine)" \
 		--target="${TARGET}" --prefix="${PREFIX}" \
-		--with-cpu=cortex-m4 \
-		--with-fpu=fpv4-sp-d16 \
-		--with-float=hard \
-		--with-mode=thumb \
+		--with-multilib-list='rmprofile' \
 		--enable-interwork \
 		--enable-multilib \
 		--with-gnu-as \
@@ -96,10 +93,7 @@ build_gcc_bootstrap() {
 	${distdir}/gcc/configure \
 		--build="$(gcc -dumpmachine)" --host="$(gcc -dumpmachine)" \
 		--target="${TARGET}" --prefix="${PREFIX}" \
-		--with-cpu=cortex-m4 \
-		--with-fpu=fpv4-sp-d16 \
-		--with-float=hard \
-		--with-mode=thumb \
+		--with-multilib-list='rmprofile' \
 		--enable-interwork \
 		--enable-multilib \
 		--with-system-zlib \
@@ -122,10 +116,7 @@ build_newlib() {
 	export CXXFLAGS_FOR_TARGET="-O2 -g -pipe"
 	${distdir}/newlib-cygwin/configure \
 		--target="${TARGET}" --prefix="${PREFIX}" \
-		--with-cpu=cortex-m4 \
-		--with-fpu=fpv4-sp-d16 \
-		--with-float=hard \
-		--with-mode=thumb \
+		--with-multilib-list='rmprofile' \
 		--enable-interwork \
 		--enable-multilib \
 		--disable-newlib-supplied-syscalls \
@@ -148,10 +139,7 @@ build_newlib_nano() {
 	export CXXFLAGS_FOR_TARGET="-Os -pipe"
 	${distdir}/newlib-cygwin/configure \
 		--target="${TARGET}" --prefix="${PREFIX}" \
-		--with-cpu=cortex-m4 \
-		--with-fpu=fpv4-sp-d16 \
-		--with-float=hard \
-		--with-mode=thumb \
+		--with-multilib-list='rmprofile' \
 		--enable-interwork \
 		--enable-multilib \
 		--disable-newlib-supplied-syscalls \
@@ -173,9 +161,21 @@ build_newlib_nano() {
 copy_newlib_nano() {
 	multilibs=$(${PREFIX}/bin/${TARGET}-gcc -print-multi-lib)
 	buildouts=(libc.a libg.a librdimon.a libstdc++.a libsupc++.a)
-	for d in $(find "${blddir}/newlib-cygwin-nano" -name 'librdimon.a'); do
-		echo $d
+	lsrcdir="${blddir}/newlib-cygwin-nano"
+	ldstdir="${PREFIX}/lib"
+	for out in "${buildouts[@]}"; do
+		for d in $(find "${lsrcdir}" -name "${out}"); do
+			outtarg="${ldstdir}/${d#"${blddir}/newlib-cygwin-nano/${target}/"}"
+			outpath="${outtarg%/*}"
+
+			outname="${outtarg##*/}"
+			outtarg="${outtarg%%*/}"
+			outtarg="${outtarg%.*}_nano.a"
+			mkdir -p "${outpath}"
+			cp "${d}" "${outtarg}"
+		done
 	done
+	echo $ldstdir
 }
 
 build_picolibc() {
@@ -191,10 +191,7 @@ build_gcc_final() {
 	${distdir}/gcc/configure \
 		--build="$(gcc -dumpmachine)" --host="$(gcc -dumpmachine)" \
 		--target="${TARGET}" --prefix="${PREFIX}" \
-		--with-cpu=cortex-m4 \
-		--with-fpu=fpv4-sp-d16 \
-		--with-float=hard \
-		--with-mode=thumb \
+		--with-multilib-list='rmprofile' \
 		--enable-interwork \
 		--enable-multilib \
 		--with-system-zlib \
