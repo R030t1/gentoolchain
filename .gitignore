@@ -1,4 +1,7 @@
 *
 
 !.gitignore
+!*.md
 !*.sh
+
+!config
