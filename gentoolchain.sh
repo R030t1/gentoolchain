@@ -104,12 +104,12 @@ build_binutils() {
 	"${distdir}"/binutils-gdb/configure \
 		--build="$(gcc -dumpmachine)" --host="$(gcc -dumpmachine)" \
 		--target="${TARGET}" --prefix="${PREFIX}" \
-		--with-multilib-list="${profile}" \
 		--enable-interwork \
 		--enable-multilib \
+		--disable-nls \
+		--with-multilib-list="${profile}" \
 		--with-gnu-as \
-		--with-gnu-ld \
-		--disable-nls
+		--with-gnu-ld
 	make -j4 all
 	make install
 	popd
@@ -124,16 +124,24 @@ build_gcc_bootstrap() {
 		--build="$(gcc -dumpmachine)" --host="$(gcc -dumpmachine)" \
 		--target="${TARGET}" --prefix="${PREFIX}" \
 		--enable-languages="c" \
-		--with-multilib-list="${profile}" \
 		--enable-interwork \
 		--enable-multilib \
-		--with-system-zlib \
-		--with-newlib \
-		--without-headers \
+		--disable-decimal-float \
+		--disable-libffi \
+		--disable-libgomp \
+		--disable-libmudflap \
+		--disable-libssp \
+		--disable-libstdcxx-pch \
+		--disable-threads \
+		--disable-tls \
 		--disable-shared \
 		--disable-nls \
+		--with-multilib-list="${profile}" \
+		--with-system-zlib \
+		--with-newlib \
 		--with-gnu-as \
-		--with-gnu-ld
+		--with-gnu-ld \
+		--without-headers
 	make -j4 all-gcc
 	make install-gcc
 	popd
@@ -146,66 +154,23 @@ build_newlib() {
 	export CXXFLAGS_FOR_TARGET="-O2 -g -pipe"
 	"${distdir}"/newlib-cygwin/configure \
 		--target="${TARGET}" --prefix="${PREFIX}" \
-		--with-multilib-list="${profile}" \
-		--enable-interwork \
-		--enable-multilib \
-		--disable-newlib-supplied-syscalls \
-		--with-gnu-as \
-		--with-gnu-ld \
-		--disable-nls \
-		--enable-newlib-nano-malloc \
-		--enable-newlib-io-c99-formats \
-		--enable-newlib-io-long-long \
-		--disable-newlib-atexit-dynamic-alloc
+		--with-multilib-list="${profile}"
+		#--enable-interwork \
+		#--enable-newlib-nano-malloc \
+		#--enable-newlib-io-c99-formats \
+		#--enable-newlib-io-long-long \
+		#--enable-multilib \
+		#--disable-newlib-atexit-dynamic-alloc \
+		#--disable-newlib-supplied-syscalls \
+		#--disable-nls \
+		#--with-multilib-list="${profile}" \
+		#--with-gnu-as \
+		#--with-gnu-ld
 	make -j4 all
 	make install
 	popd
 }
 
-build_newlib_nano() {
-	mkdir -p "${blddir}/newlib-cygwin-nano"
-	pushd "${blddir}/newlib-cygwin-nano"
-	export CFLAGS_FOR_TARGET="-Os -pipe"
-	export CXXFLAGS_FOR_TARGET="-Os -pipe"
-	"${distdir}"/newlib-cygwin/configure \
-		--target="${TARGET}" --prefix="${PREFIX}" \
-		--with-multilib-list="${profile}" \
-		--enable-interwork \
-		--enable-multilib \
-		--disable-newlib-supplied-syscalls \
-		--with-gnu-as \
-		--with-gnu-ld \
-		--disable-nls \
-		--enable-newlib-nano-malloc \
-		--enable-newlib-io-c99-formats \
-		--enable-newlib-io-long-long \
-		--disable-newlib-atexit-dynamic-alloc \
-		--enable-newlib-nano-malloc \
-		--enable-lite-exit \
-		--enable-newlib-nano-formatted-io
-	make -j4 all
-	make install
-	popd
-}
-
-copy_newlib_nano() {
-	multilibs=$(${PREFIX}/bin/${TARGET}-gcc -print-multi-lib)
-	buildouts=(libc.a libg.a librdimon.a libstdc++.a libsupc++.a)
-	lsrcdir="${blddir}/newlib-cygwin-nano"
-	ldstdir="${PREFIX}/${target}/lib"
-	for out in "${buildouts[@]}"; do
-		for d in $(find "${lsrcdir}" -name "${out}"); do
-			outtarg="${ldstdir}/${d#"${blddir}/newlib-cygwin-nano/${target}/"}"
-			outpath="${outtarg%/*}"
-
-			outname="${outtarg##*/}"
-			outtarg="${outtarg%%*/}"
-			outtarg="${outtarg%.*}_nano.a"
-			mkdir -p "${outpath}"
-			cp "${d}" "${outtarg}"
-		done
-	done
-}
 
 build_picolibc() {
 	mkdir -p "${blddir}/picolibc"
