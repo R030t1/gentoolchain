@@ -1,6 +1,9 @@
 #!/usr/bin/env false
 # Setup for riscv64-unknown-elf-gcc. Source this file.
 
+# Must specify riscv64 as arch.
+export profile="elf-multilib"
+
 100_build_binutils() {
 	:
 }

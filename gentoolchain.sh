@@ -2,7 +2,10 @@
 # Configuration:
 
 export target=${target:-arm-none-eabi}
-export prefix=${prefix:-"./install/${target}"}
+export prefix=${prefix:-"./install/${target}"}		# Version prefix?
+
+export version=${version:-$(date -I | sed s/-//g)}
+export bugurl=${bugurl:-""}
 
 # CPU multilib profile associated with target. Check gcc/config/**/t-* files.
 export profile=${profile:-rmprofile}
@@ -19,6 +22,7 @@ set -e
 # Has to run before readlink, readlink only adds at most one level.
 # Redo directory creation?
 mkdir -p "${prefix}"
+mkdir -p "./build"
 
 export TARGET=${target}
 export PREFIX=$(readlink -f "${prefix}")
@@ -104,10 +108,11 @@ build_binutils() {
 	"${distdir}"/binutils-gdb/configure \
 		--build="$(gcc -dumpmachine)" --host="$(gcc -dumpmachine)" \
 		--target="${TARGET}" --prefix="${PREFIX}" \
+		--with-multilib-list="${profile}" \
+		--with-sysroot="${prefix}" \
+		--disable-nls \
 		--enable-interwork \
 		--enable-multilib \
-		--disable-nls \
-		--with-multilib-list="${profile}" \
 		--with-gnu-as \
 		--with-gnu-ld
 	make -j4 all
@@ -120,30 +125,61 @@ build_gcc_bootstrap() {
 	pushd "${blddir}/gcc"
 	export CFLAGS_FOR_TARGET="-O2 -pipe"
 	export CXXFLAGS_FOR_TARGET="-O2 -pipe"
+	
 	"${distdir}"/gcc/configure \
-		--build="$(gcc -dumpmachine)" --host="$(gcc -dumpmachine)" \
-		--target="${TARGET}" --prefix="${PREFIX}" \
-		--enable-languages="c" \
-		--enable-interwork \
-		--enable-multilib \
-		--disable-decimal-float \
-		--disable-libffi \
-		--disable-libgomp \
-		--disable-libmudflap \
-		--disable-libssp \
-		--disable-libstdcxx-pch \
-		--disable-threads \
-		--disable-tls \
-		--disable-shared \
-		--disable-nls \
-		--with-multilib-list="${profile}" \
-		--with-system-zlib \
-		--with-newlib \
+		--with-pkgversion="${version}" \
+		--with-bugurl="${bugurl}" \
+		--build="$(gcc -dumpmachine)" \
+		--host="$(gcc -dumpmachine)" \
+		--target="${target}" \
+		--prefix="${PREFIX}" \
 		--with-gnu-as \
 		--with-gnu-ld \
-		--without-headers
+		--with-multilib-profile=rmprofile \
+		--disable-threads \
+		--disable-tls \
+		--disable-tm-clone-registry \
+		--enable-languages=c \
+		--enable-interwork \
+		--disable-libsanitizer \
+		--disable-libssp \
+		--disable-libquadmath \
+		--disable-libgomp \
+		--disable-libvtv \
+		--disable-nls \
+		--with-sysroot="${prefix}" \
+		--without-headers \
+		--with-newlib
 	make -j4 all-gcc
 	make install-gcc
+
+	#export CPPFLAGS="-I${prefix}/include ${BASE_CXXFLAGS} ${CPPFLAGS-}"
+	#export LDFLAGS="-L${prefix}/lib ${BASE_LDFLAGS} ${LDFLAGS-}"
+	#"${distdir}"/gcc/configure \
+	#	--build="$(gcc -dumpmachine)" --host="$(gcc -dumpmachine)" \
+	#	--target="${TARGET}" --prefix="${PREFIX}" \
+	#	--with-multilib-list="${profile}" \
+	#	--with-sysroot="${PREFIX}" \
+	#	--with-system-zlib \
+	#	--with-newlib \
+	#	--with-gnu-as \
+	#	--with-gnu-ld \
+	#	--enable-languages="c" \
+	#	--enable-multilib \
+	#	--enable-interwork \
+	#	--without-headers \
+	#	--disable-nls \
+	#	--disable-decimal-float \
+	#	--disable-libffi \
+	#	--disable-libgomp \
+	#	--disable-libmudflap \
+	#	--disable-libssp \
+	#	--disable-libstdcxx-pch \
+	#	--disable-threads \
+	#	--disable-tls \
+	#	--disable-shared
+	#make -j4 all-gcc
+	#make install-gcc
 	popd
 }
 
@@ -152,20 +188,21 @@ build_newlib() {
 	pushd "${blddir}/newlib-cygwin"
 	export CFLAGS_FOR_TARGET="-O2 -g -pipe"
 	export CXXFLAGS_FOR_TARGET="-O2 -g -pipe"
+	export CPPFLAGS="-I${prefix}/include ${BASE_CXXFLAGS} ${CPPFLAGS-}"
+	export LDFLAGS="-L${prefix}/lib ${BASE_LDFLAGS} ${LDFLAGS-}"
 	"${distdir}"/newlib-cygwin/configure \
 		--target="${TARGET}" --prefix="${PREFIX}" \
-		--with-multilib-list="${profile}"
-		#--enable-interwork \
-		#--enable-newlib-nano-malloc \
-		#--enable-newlib-io-c99-formats \
-		#--enable-newlib-io-long-long \
-		#--enable-multilib \
-		#--disable-newlib-atexit-dynamic-alloc \
-		#--disable-newlib-supplied-syscalls \
-		#--disable-nls \
-		#--with-multilib-list="${profile}" \
-		#--with-gnu-as \
-		#--with-gnu-ld
+		--with-multilib-list="${profile}" \
+		--disable-newlib-supplied-syscalls \
+		--enable-interwork \
+		--enable-newlib-nano-malloc \
+		--enable-newlib-io-c99-formats \
+		--enable-newlib-io-long-long \
+		--enable-multilib \
+		--disable-newlib-atexit-dynamic-alloc \
+		--disable-nls \
+		--with-gnu-as \
+		--with-gnu-ld
 	make -j4 all
 	make install
 	popd
@@ -176,7 +213,8 @@ build_picolibc() {
 	mkdir -p "${blddir}/picolibc"
 	pushd "${blddir}/picolibc"
 	# Premade arm-none-eabi target.
-	"${srcdir}"/picolibc/do-arm-configure
+	"${distdir}"/picolibc/do-arm-configure
+	ninja -j4
 }
 
 # Source the configuration.
@@ -196,5 +234,6 @@ else
 	# Steps selected.
 	(IFS=$'\n'; echo "${steps[*]}")
 fi) | while read -r step; do
+	# TODO: Look for partial step names among declaration list and run them.
 	"$step"
 done

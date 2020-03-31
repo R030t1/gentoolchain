@@ -20,20 +20,20 @@
 	export CXXFLAGS_FOR_TARGET="-Os -pipe"
 	"${distdir}"/newlib-cygwin/configure \
 		--target="${TARGET}" --prefix="${PREFIX}" \
-		--enable-interwork \
-		--enable-multilib \
-		--enable-newlib-nano-malloc \
-		--enable-newlib-io-c99-formats \
-		--enable-newlib-io-long-long \
-		--enable-newlib-nano-malloc \
-		--enable-lite-exit \
-		--enable-newlib-nano-formatted-io \
-		--disable-newlib-atexit-dynamic-alloc \
-		--disable-newlib-supplied-syscalls \
-		--disable-nls \
-		--with-multilib-list="${profile}" \
-		--with-gnu-as \
-		--with-gnu-ld
+		--with-multilib-list="${profile}"
+		#--enable-interwork \
+		#--enable-multilib \
+		#--enable-newlib-nano-malloc \
+		#--enable-newlib-io-c99-formats \
+		#--enable-newlib-io-long-long \
+		#--enable-newlib-nano-malloc \
+		#--enable-lite-exit \
+		#--enable-newlib-nano-formatted-io \
+		#--disable-newlib-atexit-dynamic-alloc \
+		#--disable-newlib-supplied-syscalls \		-- may need this.
+		#--disable-nls \
+		#--with-gnu-as \
+		#--with-gnu-ld
 	make -j4 all
 	make install
 	popd
@@ -65,16 +65,16 @@
 		--build="$(gcc -dumpmachine)" --host="$(gcc -dumpmachine)" \
 		--target="${TARGET}" --prefix="${PREFIX}" \
 		--enable-languages="c,c++" \
-		--enable-interwork \
-		--enable-multilib \
-		--disable-shared \
-		--disable-nls \
-		--with-multilib-list='rmprofile' \
-		--with-gnu-as \
-		--with-gnu-ld \
-		--with-system-zlib \
-		--with-newlib \
-		--without-headers
+		--with-multilib-list='rmprofile'
+		#--enable-interwork \
+		#--enable-multilib \
+		#--disable-shared \
+		#--disable-nls \
+		#--with-gnu-as \
+		#--with-gnu-ld \
+		#--with-system-zlib \
+		#--with-newlib \
+		#--without-headers
 	make -j4 all-gcc
 	make install-gcc
 }
